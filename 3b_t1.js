@@ -1,9 +1,7 @@
-
 // 1.取10个单位前80个单位数据比较最高价与当前价 next / 0
 // 2.找前期最低点（以80个单位为测量间隔）
 // 3.区间中枢判断
-// A: CLOSE;
-// B: HHV(HIGH,80);
+
 /*
 pull=10;             // #参数
 pierod=80;         // #参数
@@ -11,82 +9,112 @@ jump=80;            // #参数
 tpart=6;            // #参数
 */
 // 1
+abc = HHVBARS(HIGH, 12);
 
-
-
-//IF(CLOSE > REF(HHV(HIGH, pierod), pull) ) 
-//{
-    // 2
-    /* 错了
+IF(CLOSE > REF(HHV(HIGH, pierod), pull)) {
+	//IF(CLOSE > REF(HHV(HIGH, 80), 5)) {
+	// 2
+	/* 错了
     WHILE(REF(LLV(LOW, pierod), pull + jump - pierod) > REF(LLV(LOW, pierod), pull + jump) ) {
         jump = jump + pierod;
     }
-    Lbars = LLVBARS(LOW, jump + pull);
-    */	 
-	 
-	 WHILE(REF(LLV(LOW, jump), pull + pierod - jump) > REF(LLV(LOW, jump), pull + pierod) ) {
-        pierod= pierod + jump;
-    }
-    Lbars : LLVBARS(LOW, pierod + pull);
-    
+    Lbars = LLVBARS(LOW, jump + pull); 
+    */
 
-    // 3
-    // 按8段分探测线段长度
-    Linejump = INTPART(Lbars / tpart);
+	pierodtmp = pierod;
+	//WHILE(REF(LLV(LOW, jump), pull + pierod - jump) > REF(LLV(LOW, jump), pull + pierod)) {
+	WHILE(LLV(LOW, pull + pierodtmp - jump) > LLV(LOW, pull + pierodtmp)) {
+		pierodtmp = pierodtmp + jump;
+	}
+	Lbars: LLVBARS(LOW, pierodtmp + pull);
 
-    // 开始测试线段
+	最低中枢单位 = 28;最大中枢单位 = 240;
+	//IF(Lbars>最低中枢单位 AND Lbars<最大中枢单位 ) {
+	//IF(1){
+	// 3
+	// 按8段分探测线段长度
+	//Linejump := CONST(CEIL(Lbars / tpart));
+	Linejump = TPART;
+	//tptmp = Lbars / tpart;
+	//Linejump = tptmp-MOD(tptmp*10, 10);
+	// 开始测试线段
+	/*
+		// 第一段 找出高点 h1
+		tmp = 2;
+		后一个节点= Lbars - tmp * Linejump;
+		前一个节点= Lbars - (tmp - 1) * Linejump;
+		WHILE(REF(HHV(HIGH, Linejump), 后一个节点) > REF(HHV(HIGH, Linejump), 前一个节点)) {
+			tmp = tmp + 1;
+			//后一个节点= Lbars - tmp * Linejump;
+			//前一个节点= Lbars - (tmp - 1) * Linejump;
+			后一个节点= 后一个节点 - Linejump;
+			前一个节点= 前一个节点 - Linejump;
 
-    // 第一段 找出高点 h1
-    tmp = 2;
-    WHILE(REF(HHV(HIGH, Linejump), Lbars - tmp * Linejump) > REF(HHV(HIGH, Linejump), Lbars - (tmp - 1) * Linejump) ) {
-        tmp = tmp + 1;
-    }
-    // Lbh1t=REF(HHVBARS(HIGH,Linejump),Lbars-(tmp-1)*Linejump);
-    // 错的 Lbh1 : Lbars - (tmp - 1) * Linejump + REF(HHVBARS(HIGH, Linejump), Lbars - (tmp - 1) * Linejump);
-    Lbh1 : Lbars-(tmp - 1)*Linejump + HHVBARS(REF(HIGH, Lbars-(tmp-1)*Linejump), Linejump);
+		}
+		// 	循环失效证明前一个节点是对的
+		Lbh1: 前一个节点 + REF(HHVBARS(HIGH, Linejump), 前一个节点 );
+		
+*/
 
+	// 第一段 找出高点 h1
+	tmp = 2;
+	Hyg = Lbars - tmp * Linejump;
+	qyg = Lbars - (tmp - 1) * Linejump;
+	WHILE(REF(HHV(HIGH, Linejump), Hyg) > REF(HHV(HIGH, Linejump), qyg)) {
+		tmp = tmp + 1;
+		//后一个节点= Lbars - tmp * Linejump;
+		//前一个节点= Lbars - (tmp - 1) * Linejump;
+		Hyg = Hyg - Linejump;
+		qyg = qyg - Linejump;
 
-    // 第二段 找出低点 l1
-    tmp = 2;
-    WHILE(REF(LLV(LOW, Linejump), Lbh1 - tmp * Linejump) < REF(LLV(LOW, Linejump), Lbh1 - (tmp - 1) * Linejump) ) {
-        tmp = tmp + 1;
-    }
-    Lbl1 : Lbh1-(tmp-1)*Linejump + LLVBARS(REF(LOW, Lbh1-(tmp -1)*Linejump), Linejump);
+	}
+	// 	循环失效证明前一个节点是对的
+	Lbh1: 100 + REF(abc, 100);
 
+	/*
+		tmp1: tmp;
+		tt1: 前一个节点;
+		tt2: REF(HHVBARS(HIGH, Linejump), 前一个节点 );
+		Lj: Linejump;
+		*/
 
-    // 第三段 找出高点 h2
-    tmp = 2;
-    WHILE(REF(HHV(HIGH, Linejump), Lbl1 - tmp * Linejump) > REF(HHV(HIGH, Linejump), Lbl1 - (tmp - 1) * Linejump) ) {
-        tmp = tmp + 1;
-    }
-    Lbh2 : Lbl1-(tmp - 1)*Linejump + HHVBARS(REF(HIGH, Lbl1-(tmp-1)*Linejump), Linejump);
+	// 第二段 找出低点 l1
+	tmp = 2;后一个节点 = Lbh1 - tmp * Linejump;前一个节点 = Lbh1 - (tmp - 1) * Linejump;
+	WHILE(REF(LLV(LOW, Linejump), Lbh1 - tmp * Linejump) < REF(LLV(LOW, Linejump), Lbh1 - (tmp - 1) * Linejump)) {
+		tmp = tmp + 1;后一个节点 = Lbh1 - tmp * Linejump;前一个节点 = Lbh1 - (tmp - 1) * Linejump;
+	}
+	Lbl1: 前一个节点 + REF(LLVBARS(LOW, Linejump), 前一个节点);
+	//tmp2: tmp;
+	// 第三段 找出高点 h2
+	tmp = 2;后一个节点 = Lbl1 - tmp * Linejump;前一个节点 = Lbl1 - (tmp - 1) * Linejump;
+	WHILE(REF(HHV(HIGH, Linejump), 后一个节点) > REF(HHV(HIGH, Linejump), 前一个节点)) {
+		tmp = tmp + 1;后一个节点 = Lbl1 - tmp * Linejump;前一个节点 = Lbl1 - (tmp - 1) * Linejump;
 
-
-    // 第四段 找出低点 l2
-    tmp = 2;
-    WHILE(REF(LLV(LOW, Linejump), Lbh2 - tmp * Linejump) < REF(LLV(LOW, Linejump), Lbh2 - (tmp - 1) * Linejump) ) {
-        tmp = tmp + 1;
-    }
-    Lbl2 : Lbh2-(tmp-1)*Linejump + LLVBARS(REF(LOW, Lbh2-(tmp -1)*Linejump), Linejump);
-
-
-
-	IF(Lbh1==0 OR Lbl1==0 OR Lbh2==0 OR Lbl2==0 ){
+	}
+	Lbh2: 前一个节点 + REF(HHVBARS(HIGH, Linejump), 前一个节点);
+	//tmp3: tmp;
+	// 第四段 找出低点 l2
+	tmp = 2;后一个节点 = Lbh2 - tmp * Linejump;前一个节点 = Lbh2 - (tmp - 1) * Linejump;
+	WHILE(REF(LLV(LOW, Linejump), Lbh1 - tmp * Linejump) < REF(LLV(LOW, Linejump), Lbh1 - (tmp - 1) * Linejump)) {
+		tmp = tmp + 1;后一个节点 = Lbh2 - tmp * Linejump;前一个节点 = Lbh2 - (tmp - 1) * Linejump;
+	}
+	Lbl2: 前一个节点 + REF(LLVBARS(LOW, Linejump), 前一个节点);
+	//tmp4: tmp;
+	IF(Lbh1 == 0 OR Lbl1 == 0 OR Lbh2 == 0 OR Lbl2 == 0) {
 		isfocus = 0;
-	}
-	ELSE{
-		isfocus : 1;
+	} ELSE {
+		isfocus = 1;
 	}
 
+	// 辅助
+	bcount = BARSCOUNT(1);
+	isten = MOD(bcount, 10) == 0;
+	DRAWTEXT(isten, CLOSE, bcount),
+	coloryellow;
 
-//}
+	//}
+}
 //ELSE isfocus = 0;
-
-
-// 辅助
-bcount = BARSCOUNT(1);
-isten = MOD(bcount, 10)==0;
-DRAWTEXT(isten, CLOSE, bcount), coloryellow;
 
 /*
 LoT1:=  REF(LLV(LOW,T1),N);
