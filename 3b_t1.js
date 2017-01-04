@@ -13,8 +13,8 @@ zslinehighvalue= HHV(HIGH, TPART);
 zslinelowbar= LLVBARS(LOW, TPART);
 zslinelowvalue= LLV(LOW, TPART);
 
-//IF(CLOSE > REF(HHV(HIGH, pierod), pull)) {
-IF(1){
+IF(CLOSE > REF(HHV(HIGH, pierod), pull)) {
+//IF(1){
 pierodtmp = PIEROD;
 WHILE(LLV(LOW, pull + pierodtmp - JUMP) > LLV(LOW, pull + pierodtmp)) {
 	pierodtmp = pierodtmp + JUMP;
@@ -36,11 +36,16 @@ IF(ISNULL(Lbars)==0 ){
 
 	}
 	// 	循环失效证明前一个节点是对的
-	Lbh1tmp= barbefore + REF(zslinehighbar, barbefore );
-	// 中枢的一段总得有个4，5根K线吧
-	IF(Lbars-Lbh1tmp>4){
-		Lbh1: Lbh1tmp;
-	}
+	IF(barbefore>0 ){
+		Lbh1tmp= barbefore + REF(zslinehighbar, barbefore );
+		// 中枢的一段总得有个4，5根K线吧
+		IF(Lbars-Lbh1tmp>4){
+			Lbh1: Lbh1tmp;
+		}ELSE isfalse:1.3;
+		
+	}ELSE isfalse:1.2;
+
+	
 	
 	// 第二段 找出低点 l1
 	IF(ISNULL(Lbh1)==0 ){
@@ -50,15 +55,19 @@ IF(ISNULL(Lbars)==0 ){
 			barbehind= barbehind - Linejump;
 			barbefore= barbefore - Linejump;
 		}
-		Lbl1tmp= barbefore + REF(zslinelowbar, barbefore);
-		IF(Lbh1-Lbl1tmp>4){
-			Lbl1: Lbl1tmp;
-		}
-	}
+		IF(barbefore>0 ){
+			Lbl1tmp= barbefore + REF(zslinelowbar, barbefore);
+			IF(Lbh1-Lbl1tmp>4){
+				Lbl1: Lbl1tmp;
+			}ELSE isfalse:2.3;
+		
+		}ELSE isfalse:2.2;
+
+	}ELSE isfalse:2.1;
 	
 	// 第三段 找出高点 h2
-	//IF(ISNULL(Lbl1)==0 ){
-	IF(1){
+	IF(ISNULL(Lbl1)==0 ){
+	//IF(1){
 		barbehind= Lbl1 - 2 * Linejump;
 		barbefore= Lbl1 - Linejump;
 		WHILE(REF(zslinehighvalue, barbehind) > REF(zslinehighvalue, barbefore)) {
@@ -66,29 +75,45 @@ IF(ISNULL(Lbars)==0 ){
 			barbefore= barbefore - Linejump;
 
 		}
-		Lbh2tmp= barbefore + REF(zslinehighbar, barbefore);
-		IF(Lbl1-Lbh2tmp>4){
-			Lbh2: Lbh2tmp;
-		}
-	}
+		IF(barbefore>0 ){
+			Lbh2tmp= barbefore + REF(zslinehighbar, barbefore);
+			IF(Lbl1-Lbh2tmp>4){
+				Lbh2: Lbh2tmp;
+			}ELSE isfalse:3.3;
+		
+		}ELSE isfalse:3.2;
+		
+	}ELSE isfalse:3.1;
 
 	// 第四段 找出低点 l2
-	//IF(ISNULL(Lbh2)==0 ){
-	IF(1){
+	IF(ISNULL(Lbh2)==0 ){
+	//IF(1){
 		barbehind= Lbh2 - 2 * Linejump;
 		barbefore= Lbh2 - Linejump;
 		WHILE(REF(zslinelowvalue, barbehind) < REF(zslinelowvalue, barbefore)) {
 			barbehind= barbehind - Linejump;
 			barbefore= barbefore - Linejump;
 		}
-		Lbl2tmp: barbefore + REF(zslinelowbar, barbefore);
-		IF(Lbh2-Lbl2tmp>4){
-			Lbl2: Lbl2tmp;
-		}
+		IF(barbefore>0 ){
+			Lbl2tmp= barbefore + REF(zslinelowbar, barbefore);
+			IF(Lbh2-Lbl2tmp>4){
+				Lbl2: Lbl2tmp;
+			}ELSE isfalse:4.3;
+			
+		}ELSE isfalse:4.2;
+		
+	}ELSE isfalse:4.1;
+
+
+}ELSE isfalse:0.1;
+
+// 中枢成立，跳出中枢成立
+IF(ISNULL(isfalse) OR isfalse==0 ){
+	// 价格涨太高不考虑
+	IF(CLOSE/zslinelowvalue<1.3 ){
+		is3buy:1000;
+		DRAWICON(1, 300, 1);
 	}
-
-	
-
 }
 
 /*
