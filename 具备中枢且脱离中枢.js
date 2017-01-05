@@ -1,3 +1,11 @@
+/*
+具备中枢且脱离中枢
+
+用法：
+worked=100 > baseline=10 证明具备中枢且现脱离中枢向上
+goodboy	根据数值观察走到程序哪一步
+*/
+
 /* 参数说明
 PULL		距离当前周期单位开始寻找中枢和低位
 PIEROD 		初始探测低位周期长度
@@ -5,116 +13,161 @@ JUMP 		探测低位周期步进
 TPART 		从低位开始探测中枢的周期长度步进 		
 */
 
+// 判断switch
+workswitch=0;		// worked
+goodswitch=0;		// goodboy
+baseline:20;
+
 // 常量
 // 没办法用动态步进 只能用tpart直接代替步进
 Linejump = TPART;
-zslinehighbar= HHVBARS(HIGH, TPART);
-zslinehighvalue= HHV(HIGH, TPART);
-zslinelowbar= LLVBARS(LOW, TPART);
-zslinelowvalue= LLV(LOW, TPART);
+zslinehighbar = HHVBARS(HIGH, TPART);
+zslinehighvalue = HHV(HIGH, TPART);
+zslinelowbar = LLVBARS(LOW, TPART);
+zslinelowvalue = LLV(LOW, TPART);
 
-IF(CLOSE > REF(HHV(HIGH, pierod), pull)) {
+// 用HIGH>CLOSE去比较可以过滤一些瞬间值
+IF(HIGH> REF(HHV(CLOSE, pierod), pull)) {
 //IF(1){
-pierodtmp = PIEROD;
-WHILE(LLV(LOW, pull + pierodtmp - JUMP) > LLV(LOW, pull + pierodtmp)) {
-	pierodtmp = pierodtmp + JUMP;
-}
-// 低位位置
-Lbars: LLVBARS(LOW, pierodtmp + pull);
+	pierodtmp = PIEROD;
+	WHILE(LLV(LOW, pull + pierodtmp - JUMP) > LLV(LOW, pull + pierodtmp)) {
+		pierodtmp = pierodtmp + JUMP;
+	}
+	// 低位位置
+	Lbars: LLVBARS(LOW, pierodtmp + pull);
 
-//Linejump : CEIL(Lbars / tpart);
+	workswitch=1;
 }
 
 // 开始测试线段
-IF(ISNULL(Lbars)==0 ){
+IF(ISNULL(Lbars) == 0) {
 	// 第一段 找出高点 h1
-	barbehind= Lbars - 2 * Linejump;
-	barbefore= Lbars - Linejump;
+	barbehind = Lbars - 2 * Linejump;
+	barbefore = Lbars - Linejump;
 	WHILE(REF(zslinehighvalue, barbehind) > REF(zslinehighvalue, barbefore)) {
-		barbehind= barbehind - Linejump;
-		barbefore= barbefore - Linejump;
+		barbehind = barbehind - Linejump;
+		barbefore = barbefore - Linejump;
 
 	}
+	workswitch=2.1;
 	// 	循环失效证明前一个节点是对的
-	IF(barbefore>0 ){
-		Lbh1tmp= barbefore + REF(zslinehighbar, barbefore );
+	IF(barbefore > 0) {
+		Lbh1tmp = barbefore + REF(zslinehighbar, barbefore);
+		workswitch= 2.3;
 		// 中枢的一段总得有个4，5根K线吧
-		IF(Lbars-Lbh1tmp>4){
+		IF(Lbars - Lbh1tmp > 4) {
 			Lbh1: Lbh1tmp;
-		}ELSE isfalse:1.3;
-		
-	}ELSE isfalse:1.2;
+			workswitch= 2.9;
+		} ELSE {
+			workswitch= 2.4;
+		}
 
-	
-	
+	} ELSE {
+		workswitch= 2.2;
+	}
+
 	// 第二段 找出低点 l1
-	IF(ISNULL(Lbh1)==0 ){
-		barbehind= Lbh1 - 2 * Linejump;
-		barbefore= Lbh1 - Linejump;
+	IF(ISNULL(Lbh1) == 0) {
+		barbehind = Lbh1 - 2 * Linejump;
+		barbefore = Lbh1 - Linejump;
+		workswitch= 3.1;
 		WHILE(REF(zslinelowvalue, barbehind) < REF(zslinelowvalue, barbefore)) {
-			barbehind= barbehind - Linejump;
-			barbefore= barbefore - Linejump;
+			barbehind = barbehind - Linejump;
+			barbefore = barbefore - Linejump;
 		}
-		IF(barbefore>0 ){
-			Lbl1tmp= barbefore + REF(zslinelowbar, barbefore);
-			IF(Lbh1-Lbl1tmp>4){
+		IF(barbefore > 0) {
+			Lbl1tmp = barbefore + REF(zslinelowbar, barbefore);
+			workswitch= 3.3;
+			IF(Lbh1 - Lbl1tmp > 4) {
 				Lbl1: Lbl1tmp;
-			}ELSE isfalse:2.3;
-		
-		}ELSE isfalse:2.2;
+				workswitch= 3.9;
+			} ELSE {
+				workswitch= 3.4;
+			}
 
-	}ELSE isfalse:2.1;
-	
-	// 第三段 找出高点 h2
-	IF(ISNULL(Lbl1)==0 ){
-	//IF(1){
-		barbehind= Lbl1 - 2 * Linejump;
-		barbefore= Lbl1 - Linejump;
-		WHILE(REF(zslinehighvalue, barbehind) > REF(zslinehighvalue, barbefore)) {
-			barbehind= barbehind - Linejump;
-			barbefore= barbefore - Linejump;
-
+		} ELSE {
+			workswitch= 3.2;
 		}
-		IF(barbefore>0 ){
-			Lbh2tmp= barbefore + REF(zslinehighbar, barbefore);
-			IF(Lbl1-Lbh2tmp>4){
+
+	} ELSE {
+		workswitch= 3.0;
+	}
+
+	// 第三段 找出高点 h2
+	IF(ISNULL(Lbl1) == 0) {
+		//IF(1){
+		barbehind = Lbl1 - 2 * Linejump;
+		barbefore = Lbl1 - Linejump;
+		workswitch= 4.1;
+		WHILE(REF(zslinehighvalue, barbehind) > REF(zslinehighvalue, barbefore)) {
+			barbehind = barbehind - Linejump;
+			barbefore = barbefore - Linejump;
+		}
+		IF(barbefore > 0) {
+			Lbh2tmp = barbefore + REF(zslinehighbar, barbefore);
+			workswitch= 4.3;
+			IF(Lbl1 - Lbh2tmp > 4) {
 				Lbh2: Lbh2tmp;
-			}ELSE isfalse:3.3;
-		
-		}ELSE isfalse:3.2;
-		
-	}ELSE isfalse:3.1;
+				workswitch= 4.9;
+			} ELSE {
+				workswitch= 4.4;
+			}
+
+		} ELSE {
+			workswitch= 4.2;
+		}
+
+	} ELSE {
+		workswitch= 4.0;
+	}
 
 	// 第四段 找出低点 l2
-	IF(ISNULL(Lbh2)==0 ){
-	//IF(1){
-		barbehind= Lbh2 - 2 * Linejump;
-		barbefore= Lbh2 - Linejump;
+	IF(ISNULL(Lbh2) == 0) {
+		//IF(1){
+		barbehind = Lbh2 - 2 * Linejump;
+		barbefore = Lbh2 - Linejump;
+		workswitch= 4.1;
 		WHILE(REF(zslinelowvalue, barbehind) < REF(zslinelowvalue, barbefore)) {
-			barbehind= barbehind - Linejump;
-			barbefore= barbefore - Linejump;
+			barbehind = barbehind - Linejump;
+			barbefore = barbefore - Linejump;
 		}
-		IF(barbefore>0 ){
-			Lbl2tmp= barbefore + REF(zslinelowbar, barbefore);
-			IF(Lbh2-Lbl2tmp>4){
+		IF(barbefore > 0) {
+			Lbl2tmp = barbefore + REF(zslinelowbar, barbefore);
+			workswitch= 4.3;
+			IF(Lbh2 - Lbl2tmp > 4) {
 				Lbl2: Lbl2tmp;
-			}ELSE isfalse:4.3;
-			
-		}ELSE isfalse:4.2;
-		
-	}ELSE isfalse:4.1;
+				workswitch= 4.9;
+				goodswitch= 100;
+			} ELSE {
+				workswitch= 4.4;
+			}
 
+		} ELSE {
+			workswitch= 4.2;
+		}
 
-}ELSE isfalse:0.1;
-
-// 中枢成立，跳出中枢成立
-IF(ISNULL(isfalse) OR isfalse==0 ){
-	// 价格涨太高不考虑
-	IF(CLOSE/zslinelowvalue<1.3 ){
-		is3buy:1000;
-		DRAWICON(1, 300, 1);
+	} ELSE {
+		workswitch= 5.0;
 	}
+
+} ELSE{
+	workswitch= 2.0;
 }
+
+worked: workswitch;
+goodboy: goodswitch;
+
+/*
+// 中枢成立，跳出中枢成立
+IF(ISNULL(isfalse) OR isfalse == 0) {
+	// 价格涨太高不考虑
+	//IF(CLOSE / zslinelowvalue < 1.3) {
+	IF(1){
+		is3buy: 1000;
+		DRAWICON(1, 300, 1);
+	} ELSE is3buy: 0.01;
+} ELSE is3buy: 0.01;
+*/
 
 /*
 		// 第一段 找出高点 h1
@@ -195,12 +248,10 @@ IF(ISNULL(Lbars) ){
 
 // 1. 判断当前价格是否一段时间内高位，满足3买前提
 
-
-
 // 辅助
 bcount = BARSCOUNT(1);
 isten = MOD(bcount, 10);
-DRAWTEXT(isten == 0, 0, MOD(bcount, 1000)),coloryellow;
-DRAWTEXT(MOD(isten,5)==0 AND MOD(isten,10)!=0, 0, isten),coloryellow;
-
-
+DRAWTEXT(isten == 0, 0, MOD(bcount, 1000)),
+coloryellow;
+DRAWTEXT(MOD(isten, 5) == 0 AND MOD(isten, 10) != 0, 0, isten),
+coloryellow;
